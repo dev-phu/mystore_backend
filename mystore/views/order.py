@@ -3,11 +3,22 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.db import transaction
 from mystore.models import Product, Cart, Order, OrderItem
-from mystore.serializers import OrderSerializer
+from mystore.serializers import OrderSerializer, CartSerializer
 from mystore.permissions import IsBuyer
 
 
 class CartView(APIView):
+    def get(self, request):
+        if not IsBuyer().has_permission(request, self):
+            return Response(
+                {"detail": "Only buyers can view their cart."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        
+        cart_items = Cart.objects.filter(buyer=request.user).order_by("-cart_id")
+        serializer = CartSerializer(cart_items, many=True, context={"request": request})
+        return Response(serializer.data)
+
     def post(self, request):
         if not IsBuyer().has_permission(request, self):
             return Response(
@@ -69,6 +80,52 @@ class CartView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+    def put(self, request):
+        if not IsBuyer().has_permission(request, self):
+            return Response(
+                {"detail": "Only buyers can update their cart."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+            
+        cart_id = request.data.get("cart_id")
+        quantity = int(request.data.get("quantity", 1))
+
+        if not cart_id:
+            return Response({"detail": "cart_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if quantity <= 0:
+            return Response({"detail": "Quantity must be greater than 0."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            cart_item = Cart.objects.get(pk=cart_id, buyer=request.user)
+            
+            if cart_item.product.available_quantity < quantity:
+                return Response({"detail": "Not enough stock available."}, status=status.HTTP_400_BAD_REQUEST)
+                
+            cart_item.quantity = quantity
+            cart_item.save()
+            return Response({"detail": "Cart updated."}, status=status.HTTP_200_OK)
+        except Cart.DoesNotExist:
+            return Response({"detail": "Cart item not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request):
+        if not IsBuyer().has_permission(request, self):
+            return Response(
+                {"detail": "Only buyers can delete items from cart."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        
+        cart_id = request.data.get("cart_id")
+        if not cart_id:
+            return Response({"detail": "cart_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            cart_item = Cart.objects.get(pk=cart_id, buyer=request.user)
+            cart_item.delete()
+            return Response({"detail": "Item removed from cart."}, status=status.HTTP_204_NO_CONTENT)
+        except Cart.DoesNotExist:
+            return Response({"detail": "Cart item not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
 class CheckoutView(APIView):

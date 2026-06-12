@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product
+from .models import Product, Cart, Order, OrderItem
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -29,7 +29,12 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ("seller",)
 
 
-from .models import Order, OrderItem
+class CartSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+
+    class Meta:
+        model = Cart
+        fields = ("cart_id", "product", "quantity")
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
