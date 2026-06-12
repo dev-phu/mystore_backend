@@ -22,15 +22,15 @@ class CartView(APIView):
         except Product.DoesNotExist:
             return Response({"detail": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
             
-        # ตรวจสอบว่าสินค้ามีพอไหม
+        # check amout of stock
         if product.available_quantity < quantity:
             return Response({"detail": "Not enough stock available."}, status=status.HTTP_400_BAD_REQUEST)
             
-        # ตรวจสอบว่ามีสินค้านี้ในตะกร้าหรือยัง
+        # check product is already in the cart
         cart_item, created = Cart.objects.get_or_create(buyer=request.user, product=product)
         
         if not created:
-            # ถ้ามีอยู่แล้วให้บวกจำนวนเพิ่ม และเช็คสต็อกอีกรอบ
+            # if product is already in the cart, add quantity and check stock
             if product.available_quantity < (cart_item.quantity + quantity):
                 return Response({"detail": "Not enough stock to add more of this item to your cart."}, status=status.HTTP_400_BAD_REQUEST)
             cart_item.quantity += quantity

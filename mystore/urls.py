@@ -1,13 +1,14 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .views.auth import RegisterView
+from .views.auth import RegisterView, ProfileView
 from .views.product import ProductListCreateView, ProductDetailView, SellerProductListView, SellerProductDetailView
 from .views.order import CartView, CheckoutView, OrderHistoryView
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('profile/', ProfileView.as_view(), name='profile'),
     
     # Product Management
     # ========= get all product /post only seller ===========
