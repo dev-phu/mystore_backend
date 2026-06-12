@@ -25,3 +25,19 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = '__all__'
         read_only_fields = ('seller',)
+
+from .models import Order, OrderItem
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product_title = serializers.CharField(source='product.title', read_only=True)
+    
+    class Meta:
+        model = OrderItem
+        fields = ('order_item_id', 'product', 'product_title', 'quantity', 'unit_price')
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True, read_only=True) # ดึง OrderItem ที่ผูกกับบิลนี้มาแสดงด้วย
+
+    class Meta:
+        model = Order
+        fields = ('order_id', 'total_amount', 'status', 'create_at', 'items')

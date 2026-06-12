@@ -13,9 +13,9 @@ class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
     seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='products')
     title = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True) # ใช้ TextField เพราะรายละเอียดอาจจะยาว
-    image_url = models.URLField(max_length=500, blank=True, null=True) # เก็บเป็น Link รูปภาพ
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2) # ตัวเลขทศนิยม 2 ตำแหน่งสำหรับราคาสินค้า
+    description = models.TextField(blank=True, null=True) 
+    image = models.ImageField(upload_to='product_images/', blank=True, null=True) # keep image
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2) # เลข2หลักเพื่อจำนวนสินค้า
     available_quantity = models.IntegerField(default=0)
 
     def __str__(self):
@@ -36,7 +36,7 @@ class Order(models.Model):
     order_id = models.AutoField(primary_key=True)
     buyer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=50, default='pending') # สถานะเช่น pending, paid, shipped
+    status = models.CharField(max_length=50, default='pending') # status pending, paid, shipped
     create_at = models.DateTimeField(auto_now_add=True) # บันทึกเวลาปัจจุบันอัตโนมัติเมื่อสร้าง Order
 
     def __str__(self):
