@@ -23,7 +23,7 @@ class Product(models.Model):
         max_digits=10, decimal_places=2
     )  # เลข2หลักเพื่อจำนวนสินค้า
     available_quantity = models.IntegerField(default=0)
-
+    is_active = models.BooleanField(default=True)
     def __str__(self):
         return self.title
 

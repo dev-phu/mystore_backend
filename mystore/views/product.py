@@ -14,7 +14,7 @@ class ProductListCreateView(APIView):
         min_price = request.query_params.get("min_price", None)
         max_price = request.query_params.get("max_price", None)
 
-        products = Product.objects.all()
+        products = Product.objects.filter(is_active=True)
 
         # 1. ค้นหาจากคีย์เวิร์ด
         if keyword:
@@ -127,5 +127,6 @@ class SellerProductDetailView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        product.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        product.is_active = False
+        product.save()
+        return Response({"detail": "Product hidden successfully."}, status=status.HTTP_200_OK)
