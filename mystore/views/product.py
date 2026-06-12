@@ -29,7 +29,7 @@ class ProductListCreateView(APIView):
         if max_price is not None:
             products = products.filter(unit_price__lte=max_price)
 
-        serializer = ProductSerializer(products, many=True)
+        serializer = ProductSerializer(products, many=True, context={"request": request})
         return Response(serializer.data)
 
     # product management
@@ -41,7 +41,7 @@ class ProductListCreateView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        serializer = ProductSerializer(data=request.data)
+        serializer = ProductSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             serializer.save(seller=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -58,7 +58,7 @@ class ProductDetailView(APIView):
                 {"detail": "Product not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = ProductSerializer(product)
+        serializer = ProductSerializer(product, context={"request": request})
         # ข้อมูลที่ส่งกลับไปจะมีทั้ง description, unit_price และ available_quantity ในตัวอยู่แล้ว
         return Response(serializer.data)
 
@@ -73,7 +73,7 @@ class SellerProductListView(APIView):
 
         # ค้นหาเฉพาะสินค้าที่ seller คนนี้เป็นเจ้าของ (อิงจาก Token ที่แนบมา)
         products = Product.objects.filter(seller=request.user)
-        serializer = ProductSerializer(products, many=True)
+        serializer = ProductSerializer(products, many=True, context={"request": request})
         return Response(serializer.data)
 
 
@@ -103,7 +103,7 @@ class SellerProductDetailView(APIView):
             )
 
         serializer = ProductSerializer(
-            product, data=request.data, partial=True
+            product, data=request.data, partial=True, context={"request": request}
         )  # partial=True อนุญาตให้ส่งมาแก้แค่บางฟิลด์ได้
         if serializer.is_valid():
             serializer.save()
