@@ -77,6 +77,18 @@ cd ../mystore/my-store-frontend
 | **Django Admin (หลังบ้าน)** | [http://localhost:8000/admin/](http://localhost:8000/admin/) | ใช้บัญชี Superuser ที่สร้างไว้ |
 | **pgAdmin (จัดการฐานข้อมูล)** | [http://localhost:5050/](http://localhost:5050/) | **Email:** admin@admin.com<br>**Password:** admin |
 
+### วิธีเชื่อมต่อฐานข้อมูล PostgreSQL ผ่าน pgAdmin
+เมื่อล็อกอินเข้า pgAdmin ครั้งแรก คุณจะต้องตั้งค่าเชื่อมต่อกับฐานข้อมูล โดยทำตามขั้นตอนดังนี้:
+1. คลิกขวาที่ **Servers** (เมนูซ้ายมือ) เลือก **Register** > **Server...**
+2. หน้าต่างใหม่จะเด้งขึ้นมา ที่แท็บ **General**: ช่อง **Name** ให้ตั้งชื่ออะไรก็ได้ (เช่น `MyStore DB`)
+3. สลับไปที่แท็บ **Connection** แล้วกรอกข้อมูลดังนี้ (อ้างอิงจากไฟล์ `.env.dev`):
+   - **Host name/address:** `db` *(หมายเหตุ: ต้องใช้ชื่อนี้เพราะอยู่ในวงเน็ตเวิร์กของ Docker)*
+   - **Port:** `5432`
+   - **Maintenance database:** `mystore` (ค่าเริ่มต้นของ `DB_NAME`)
+   - **Username:** `postgres` (ค่าเริ่มต้นของ `DB_USER`)
+   - **Password:** `postgres` (ค่าเริ่มต้นของ `DB_PASSWORD`)
+4. กดปุ่ม **Save** เป็นอันเสร็จสิ้น คุณจะสามารถดูและแก้ไขข้อมูลตารางต่างๆ ได้เลย
+
 ---
 
 ## 💡 คำสั่งที่ใช้บ่อยใน Backend (Cheat Sheet)
