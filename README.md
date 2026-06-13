@@ -20,7 +20,7 @@ cd mystore_backend
 1. คัดลอกไฟล์ `.env.example` แล้วเปลี่ยนชื่อเป็น `.env.dev`
 2. สร้าง `SECRET_KEY` ใหม่ที่ไม่ซ้ำกัน โดยรันคำสั่งนี้ใน Terminal (เครื่องต้องมี Python):
    ```bash
-   python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+   python -c "import secrets, string; print(''.join(secrets.choice(string.ascii_letters + string.digits + '!@#$%^&*(-_)') for _ in range(50)))"
    ```
 3. นำรหัสที่ได้มา (Copy ไปทั้งบรรทัด) ไปใส่ไว้ในไฟล์ `.env.dev` ที่บรรทัด `SECRET_KEY=...`
 
