@@ -3,8 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.db import transaction
 from mystore.models import Product, Cart, Order, OrderItem
-from mystore.serializers import OrderSerializer, CartSerializer
-from mystore.permissions import IsBuyer
+from mystore.serializers import OrderSerializer, CartSerializer, SellerOrderItemSerializer
+from mystore.permissions import IsBuyer, IsSeller
 
 
 class CartView(APIView):
@@ -156,6 +156,8 @@ class CheckoutView(APIView):
                     product = Product.objects.select_for_update().get(
                         pk=item.product.product_id
                     )
+                    if not product.is_active:
+                        raise ValueError(f"Product '{product.title}' is no longer available.")
                     if product.available_quantity < item.quantity:
                         raise ValueError(
                             f"Not enough stock for product: {product.title}"
@@ -223,3 +225,68 @@ class OrderHistoryView(APIView):
         )  # เรียงจากใหม่ไปเก่า
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
+
+
+class SellerOrderItemListView(APIView):
+    def get(self, request):
+        if not IsSeller().has_permission(request, self):
+            return Response(
+                {"detail": "Only sellers can view their sold items."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Get all OrderItems where the product's seller is the current user
+        order_items = OrderItem.objects.filter(product__seller=request.user).select_related('order', 'order__buyer', 'product').order_by("-order__create_at")
+        serializer = SellerOrderItemSerializer(order_items, many=True)
+        return Response(serializer.data)
+
+
+class SellerOrderItemDetailView(APIView):
+    def patch(self, request, pk):
+        if not IsSeller().has_permission(request, self):
+            return Response(
+                {"detail": "Only sellers can update their sold items."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            order_item = OrderItem.objects.select_related('order', 'product').get(pk=pk, product__seller=request.user)
+        except OrderItem.DoesNotExist:
+            return Response({"detail": "Order item not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        new_status = request.data.get("status")
+        valid_statuses = ["pending", "processing", "shipped", "delivered", "cancelled"]
+        if not new_status or new_status not in valid_statuses:
+            return Response({"detail": f"Valid status is required. Choose from {valid_statuses}."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Prevent changing status if already cancelled
+        if order_item.status == "cancelled":
+            return Response({"detail": "Cannot update a cancelled order item."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if new_status == "cancelled":
+            try:
+                with transaction.atomic():
+                    # Lock rows to prevent race conditions during cancellation
+                    product = Product.objects.select_for_update().get(pk=order_item.product.product_id)
+                    order = Order.objects.select_for_update().get(pk=order_item.order.order_id)
+                    
+                    # 1. Restore product stock
+                    product.available_quantity += order_item.quantity
+                    product.save()
+                    
+                    # 2. Deduct from order total amount
+                    refund_amount = order_item.quantity * order_item.unit_price
+                    order.total_amount -= refund_amount
+                    order.save()
+                    
+                    # 3. Update order item status
+                    order_item.status = new_status
+                    order_item.save()
+                    
+                return Response({"detail": "Order item cancelled. Stock restored and amount refunded."}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({"detail": "Failed to cancel order item."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            order_item.status = new_status
+            order_item.save()
+            return Response({"detail": "Order item status updated."}, status=status.HTTP_200_OK)

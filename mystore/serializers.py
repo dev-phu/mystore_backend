@@ -28,6 +28,16 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ("seller",)
 
+    def validate_unit_price(self, value):
+        if value < 0:
+            raise serializers.ValidationError("Price cannot be negative.")
+        return value
+
+    def validate_available_quantity(self, value):
+        if value < 0:
+            raise serializers.ValidationError("Quantity cannot be negative.")
+        return value
+
 
 class CartSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
@@ -42,7 +52,18 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderItem
-        fields = ("order_item_id", "product", "product_title", "quantity", "unit_price")
+        fields = ("order_item_id", "product", "product_title", "quantity", "unit_price", "status")
+
+
+class SellerOrderItemSerializer(serializers.ModelSerializer):
+    product_title = serializers.CharField(source="product.title", read_only=True)
+    buyer_name = serializers.CharField(source="order.buyer.username", read_only=True)
+    order_date = serializers.DateTimeField(source="order.create_at", read_only=True)
+    order_id = serializers.IntegerField(source="order.order_id", read_only=True)
+
+    class Meta:
+        model = OrderItem
+        fields = ("order_item_id", "order_id", "product", "product_title", "quantity", "unit_price", "status", "buyer_name", "order_date")
 
 
 class OrderSerializer(serializers.ModelSerializer):

@@ -66,6 +66,9 @@ class OrderItem(models.Model):
     unit_price = models.DecimalField(
         max_digits=10, decimal_places=2
     )  # เก็บราคา ณ วันที่ซื้อ (เผื่ออนาคตสินค้าปรับราคา)
+    status = models.CharField(
+        max_length=50, default="pending"
+    )  # status: pending, processing, shipped, delivered, cancelled
 
     def __str__(self):
         return f"{self.quantity} x {self.product.title} (Order #{self.order.order_id})"

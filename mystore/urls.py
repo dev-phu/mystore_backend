@@ -8,7 +8,7 @@ from .views.product import (
     SellerProductListView,
     SellerProductDetailView,
 )
-from .views.order import CartView, CheckoutView, OrderHistoryView
+from .views.order import CartView, CheckoutView, OrderHistoryView, SellerOrderItemListView, SellerOrderItemDetailView
 
 urlpatterns = [
     path("register/", RegisterView.as_view(), name="register"),
@@ -35,4 +35,7 @@ urlpatterns = [
     path("cart/", CartView.as_view(), name="cart"),
     path("orders/checkout/", CheckoutView.as_view(), name="checkout"),
     path("orders/", OrderHistoryView.as_view(), name="order_history"),
+    # Seller Orders
+    path("orders/mysellerorders/", SellerOrderItemListView.as_view(), name="seller_orders"),
+    path("orders/mysellerorders/<int:pk>/", SellerOrderItemDetailView.as_view(), name="seller_order_detail"),
 ]
